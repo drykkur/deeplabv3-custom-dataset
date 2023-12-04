@@ -67,22 +67,16 @@ def get_labels():
         np.ndarray with dimensions (15, 3)
     """
     return np.asarray([ (0, 0, 0),       # Background
-                        (162, 0, 255),   # Chave seccionadora lamina (Aberta)
-                        (97, 16, 162),   # Chave seccionadora lamina (Fechada)
-                        (81, 162, 0),    # Chave seccionadora tandem (Aberta)
-                        (48, 97, 165),   # Chave seccionadora tandem (Fechada)
-                        (121, 121, 121), # Disjuntor
-                        (255, 97, 178),  # Fusivel
-                        (154, 32, 121),  # Isolador disco de vidro
-                        (255, 255, 125), # Isolador pino de porcelana
-                        (162, 243, 162), # Mufla
-                        (143, 211, 255), # Para-raio
-                        (40, 0, 186),    # Religador
-                        (255, 182, 0),   # Transformador
-                        (138, 138, 0),   # Transformador de Corrente (TC)
-                        (162, 48, 0),    # Transformador de Potencial (TP)
-                        (162, 0, 96)     # Chave tripolar
-                        ]) 
+                        (250, 149, 10),   # hood
+                        (19, 98, 19),   # front door
+                        (249,249,10), # rear door
+                        (10,248,250), # frame
+                        (149,7,149), # rear quarter panel
+                        (5,249,9), # trunk lid
+                        (20,19,249), # fender
+                        (249,9,250), # bumper
+                        (255, 255, 255)]    # rest of car
+                        )
 
 def decode_fn(label_mask):
     """Decode segmentation class labels into a color image
@@ -114,7 +108,6 @@ def main():
         os.environ['CUDA_VISIBLE_DEVICES'] = opts.gpu_id
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         print("Device: %s" % device)
-
         # Setup dataloader
         image_files = []
         if os.path.isdir(opts.input):
@@ -124,13 +117,11 @@ def main():
                     image_files.extend(files)
         elif os.path.isfile(opts.input):
             image_files.append(opts.input)
-
         # Set up model (all models are 'constructed at network.modeling)
         model = network.modeling.__dict__[opts.model](num_classes=opts.num_classes, output_stride=opts.output_stride)
         if opts.separable_conv and 'plus' in opts.model:
             network.convert_to_separable_conv(model.classifier)
         utils.set_bn_momentum(model.backbone, momentum=0.01)
-
         if opts.ckpt is not None and os.path.isfile(opts.ckpt):
             # https://github.com/VainF/DeepLabV3Plus-Pytorch/issues/8#issuecomment-605601402, @PytaichukBohdan
             checkpoint = torch.load(opts.ckpt, map_location=torch.device('cpu'))

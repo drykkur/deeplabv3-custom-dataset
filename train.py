@@ -22,7 +22,7 @@ import matplotlib.pyplot as plt
 import os
 import glob
 
-from mail import * # A: for email
+#from mail import * # A: for email
 
 import sys
 import traceback
@@ -148,6 +148,7 @@ def get_dataset(opts):
         ])
     train_dst = CustomSegmentation(image_dir=opts.train_dir, mask_dir=opts.train_seg_dir, transform=train_transform)
     val_dst = CustomSegmentation(image_dir=opts.val_dir, mask_dir=opts.val_seg_dir, transform=val_transform)
+    #print(opts.train_dir)
  
     return train_dst, val_dst
 
@@ -218,7 +219,7 @@ def main():
         os.makedirs("./logs/")
         print("created folder : ", "./logs/")   
     
-    mail_server = get_mail_server() # A: for email
+    #mail_server = get_mail_server() # A: for email
 
     # Setup visualization
     vis = Visualizer(port=opts.vis_port,
@@ -241,6 +242,7 @@ def main():
     opts.val_batch_size = 1
     
     train_dst, val_dst = get_dataset(opts)
+    #print(train_dst)
     train_loader = data.DataLoader(
         train_dst, batch_size=opts.batch_size, shuffle=True, num_workers=8,
         drop_last=True)  # drop_last=True to ignore single-image batches.
@@ -346,17 +348,17 @@ def main():
             model.train()
             
             # A: mail begin
-            if cur_epochs%10 == 0 and first_val:
-                local_time = get_time()         # A: for email
-                mail_reply = f"Training: round {opts.training_round}\nEpoch {cur_epochs}/{opts.total_epochs}, iteration {cur_itrs} at {local_time}.\nLoss: {np_loss}\nOverall Acc: {val_score['Overall Acc']}\nMean Acc: {val_score['Mean Acc']}\nFreqW Acc: {val_score['FreqW Acc']}\nMean IoU: {val_score['Mean IoU']}\nClass IoU: {val_score['Class IoU']}"
-                for dest in get_mail_addresses():
-                    send_mail(server = mail_server["server_address"],
-                              port = mail_server["server_port"],
-                              user = mail_server["user"],
-                              password = mail_server["password"],
-                              to = dest,
-                              subject = opts.mail_subject,
-                              body = mail_reply)
+            #if cur_epochs%10 == 0 and first_val:
+            #    local_time = get_time()         # A: for email
+            #    mail_reply = f"Training: round {opts.training_round}\nEpoch {cur_epochs}/{opts.total_epochs}, iteration {cur_itrs} at {local_time}.\nLoss: {np_loss}\nOverall Acc: {val_score['Overall Acc']}\nMean Acc: {val_score['Mean Acc']}\nFreqW Acc: {val_score['FreqW Acc']}\nMean IoU: {val_score['Mean IoU']}\nClass IoU: {val_score['Class IoU']}"
+            #    for dest in get_mail_addresses():
+            #        send_mail(server = mail_server["server_address"],
+            #                  port = mail_server["server_port"],
+            #                  user = mail_server["user"],
+            #                  password = mail_server["password"],
+            #                  to = dest,
+            #                  subject = opts.mail_subject,
+            #                  body = mail_reply)
             # A: mail end  
 
             cur_epochs += 1
@@ -442,16 +444,16 @@ def main():
                         save_ckpt('checkpoints/best_%s_%s_os%d_%s.pth' %
                                   (opts.model, opts.dataset, opts.output_stride, opts.model_name))
                     # A: mail begin
-                    local_time = get_time()         # A: for email
-                    mail_reply = f"Training: round {opts.training_round}\nEpoch {cur_epochs}/{opts.total_epochs}, iteration {cur_itrs} at {local_time}.\nLoss: {np_loss}\nOverall Acc: {val_score['Overall Acc']}\nMean Acc: {val_score['Mean Acc']}\nFreqW Acc: {val_score['FreqW Acc']}\nMean IoU: {val_score['Mean IoU']}\nClass IoU: {val_score['Class IoU']}"
-                    for dest in get_mail_addresses():
-                        send_mail(server = mail_server["server_address"],
-                                  port = mail_server["server_port"],
-                                  user = mail_server["user"],
-                                  password = mail_server["password"],
-                                  to = dest,
-                                  subject = opts.mail_subject,
-                                  body = mail_reply)
+                    #local_time = get_time()         # A: for email
+                    #mail_reply = f"Training: round {opts.training_round}\nEpoch {cur_epochs}/{opts.total_epochs}, iteration {cur_itrs} at {local_time}.\nLoss: {np_loss}\nOverall Acc: {val_score['Overall Acc']}\nMean Acc: {val_score['Mean Acc']}\nFreqW Acc: {val_score['FreqW Acc']}\nMean IoU: {val_score['Mean IoU']}\nClass IoU: {val_score['Class IoU']}"
+                    #for dest in get_mail_addresses():
+                    #    send_mail(server = mail_server["server_address"],
+                    #              port = mail_server["server_port"],
+                    #              user = mail_server["user"],
+                    #              password = mail_server["password"],
+                    #              to = dest,
+                    #              subject = opts.mail_subject,
+                    #              body = mail_reply)
                     # A: mail end 
                     # A: added these to keep logs instead of using Visdom
                     output = [f"Epoch: {cur_epochs}", 

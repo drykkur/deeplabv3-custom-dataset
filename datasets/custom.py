@@ -27,6 +27,7 @@ class CustomSegmentation(data.Dataset):
                  transform=None):
         self.transform = transform
         # A: checking if the jpg directory exists
+        #print(image_dir)
         if not os.path.isdir(image_dir):
             raise RuntimeError('Dataset not found or corrupted.' +
                                'Check the source image folder.')
@@ -44,14 +45,20 @@ class CustomSegmentation(data.Dataset):
             # A: filtering since the directory also contains the .txt files used for YOLO annotation
             if ".txt" not in file:
                 # A: keeping only the filename and its extension, without the path
-                file = file.split("/")[-1]
+                file = file.split("\\")[-1]
+                #file = file
+                #print(file)
                 #file = os.path.splitext(file)[0]
                 image_list.append(file)
-        
+        newimg = []
+        #for i in image_list:
+        #    newimg.append(image_dir + '/' + i)
+        #print(image_dir)
         self.images = [os.path.join(image_dir, x) for x in image_list]
         # A: masks are always .png.
         self.masks = [os.path.join(mask_dir, os.path.splitext(x)[0] + ".png") for x in image_list]
         assert (len(self.images) == len(self.masks)) 
+        #print(newimg)
 
     def __getitem__(self, index):
         """
@@ -123,22 +130,16 @@ class CustomSegmentation(data.Dataset):
             np.ndarray with dimensions (16, 3)
         """
         return np.asarray([ (0, 0, 0),       # Background
-                            (162, 0, 255),   # Chave seccionadora lamina (Aberta)
-                            (97, 16, 162),   # Chave seccionadora lamina (Fechada)
-                            (81, 162, 0),    # Chave seccionadora tandem (Aberta)
-                            (48, 97, 165),   # Chave seccionadora tandem (Fechada)
-                            (121, 121, 121), # Disjuntor
-                            (255, 97, 178),  # Fusivel
-                            (154, 32, 121),  # Isolador disco de vidro
-                            (255, 255, 125), # Isolador pino de porcelana
-                            (162, 243, 162), # Mufla
-                            (143, 211, 255), # Para-raio
-                            (40, 0, 186),    # Religador
-                            (255, 182, 0),   # Transformador
-                            (138, 138, 0),   # Transformador de Corrente (TC)
-                            (162, 48, 0),    # Transformador de Potencial (TP)
-                            (162, 0, 96)     # Chave tripolar
-                          ])   
+                        (250, 149, 10),   # hood
+                        (19, 98, 19),   # front door
+                        (249,249,10), # rear door
+                        (10,248,250), # frame
+                        (149,7,149), # rear quarter panel
+                        (5,249,9), # trunk lid
+                        (20,19,249), # fender
+                        (249,9,250), # bumper
+                        (255, 255, 255)]    # rest of car
+                        )
 
 
 #     @classmethod
