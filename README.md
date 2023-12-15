@@ -1,20 +1,7 @@
 # DeepLabv3Plus-Pytorch
 
-Modification of the [work](https://github.com/VainF/DeepLabV3Plus-Pytorch) by [Gongfan Fang](https://github.com/VainF).
+Modification of the [work](https://github.com/VainF/DeepLabV3Plus-Pytorch) by [Gongfan Fang](https://github.com/VainF) and [work](https://github.com/andreas-apg/deeplabv3-custom-dataset).
 
-Some tinkering of their implementation of DeepLab with a custom dataset loader.
-
-### What I added:
-#### train.py
-- **e-mail update functionality:** It's now possible to receive updates of training progress using the gmail API. Edit mail.py to point to a .csv that has the sender and receiver infos. Be careful to not commit that info!
-- **epoch functionality:** the original implementation could only train over a number of iterations. I added the classic epoch approach instead, where the model goes over the entirety of the training set. At the moment, you still need to manually alter the --total_itrs parameter to account for that though. Calculate how many images your training set has and do the count. I might update that in the future to not need this anymore. The weights file was updated to accomodate for the new cur_epoch parameter.
-- **updated resume training:** I updated the weights file with new parameters to allow training to resume.
-- **logging:** instead of relying only on visdom, now the model will output a .txt file with the model statistics with the model name inside the /logs/ directory. If running --test_only, that will instead be inside /logs/test.
-
-#### predict.py
-- simple fix to check the exif_transpose flag in case an image wasn't natively rotated.
-
-## Quick Start 
 
 ### 1. Available Architectures
 Specify the model architecture with '--model ARCH_NAME' and set the output stride using '--output_stride OUTPUT_STRIDE'.
@@ -27,36 +14,6 @@ Specify the model architecture with '--model ARCH_NAME' and set the output strid
 |deeplabv3_hrnetv2_48 | deeplabv3plus_hrnetv2_48 |
 |deeplabv3_hrnetv2_32 | deeplabv3plus_hrnetv2_32 |
 
-### 2. Making a Custom Dataset
-Modify the function get_labels in the `custom.py` in the `datasets` directory, so that it returns the RGB colors of the segmentation mask annotations of your dataset. The encoder and decoder class methods `decode_target` and `encode_target` will handle the rest.
-
-Since this implementation uses PIL, do take care to save your segmentation masks as RGB if they were made using openCV with cv2.cvtColor and the argument cv2.COLOR_BGR2RGB.
-
-```python
-def get_labels():
-    """Load the mapping that associates classes with label colors.
-       Don't forget to include background as black (0, 0, 0).
-    Returns:
-        np.ndarray with dimensions (n, 3)
-    """
-    return np.asarray([ (0, 0, 0),       # Background
-                        (162, 0, 255),   # Object 1
-                        (97, 16, 162),   # Object 2
-                        ...
-                        (162, 48, 0)]    # Object n
-                        )
-
-```
-If you rename custom.py or are going to have multiple datasets, import those .py files in the `__init__.py` inside the datasets directory.
-
-The dataset is made of an original image and its segmentation mask. Keep the original images and the segmentation masks in their own, separate directories. 
-
-The segmentation mask has the exact same name as the original image, with a .png extension and should use the colors listed in the get_labels function. Any color not listed, such as outlines, will be considered the same as background. 
-
-<div>
-<img src="samples/1_image.png"   width="20%">
-<img src="samples/1_target.png"  width="20%">
-</div>
 
 ### 3. Training With a Custom Dataset
 
@@ -68,23 +25,22 @@ The number of classes passed in the `--num_classes` argument should be the same 
 
 For example, if you want to identify cats and dogs, you would have **3** classes: **background**, **cat** and **dog**.
 
-To train, you would use something like this:
+In order to fix our masking for segmentation images you must run fixsegments.ipynb with the correct input directory and your desired output directory for all segmented images.
 
+To train, you would use something like this:
+Fresh training
 ```bash
-python train.py --model deeplabv3plus_mobilenet --gpu_id 0 --crop_val --lr 0.01 --crop_size 640 --batch_size 16 --output_stride 16 --train_dir /path/to/original/training/images/ --train_seg_dir /path/to/segmentation/training/images/ --val_dir /path/to/original/validation/images/ --val_seg_dir /path/to/segmentation/validation/images/ --save_val_results --num_classes 3 --dataset custom --model_name cats-and-dogs
+python train.py --model deeplabv3plus_mobilenet --gpu_id 0 --lr 0.01 --crop_val --crop_size 255 --batch_size 16 --output_stride 16 --train_dir 'pathtotrainingdata' --train_seg_dir 'pathtosegmentedtrainingdata' --val_dir 'pathtovalidationdata' --val_seg_dir 'pathtosegmentedvalidationdata' --save_val_results --num_classes 9 --dataset custom --model_name 'nameofmodel' --loss_type focal_loss  --total_epochs 100
+```
+Train frm checkpoint
+```bash
+python train.py --model deeplabv3plus_mobilenet --gpu_id 0 --lr 0.01 --crop_val --crop_size 255 --batch_size 16 --output_stride 16 --train_dir datasets/data/noseg --train_seg_dir datasets/data/segfix --val_dir datasets/validdata/noseg --val_seg_dir datasets/validdata/segfix --save_val_results --num_classes 9 --dataset custom --model_name focalfix --loss_type focal_loss --ckpt checkpoints/best_deeplabv3plus_mobilenet_custom_os16_focalfix.pth --total_epochs 100
 ```
 The .pth weight file will be saved under the `checkpoints` directory. The argument passed in --model_name will be concatenated along with the name of the model passed in the `--model` argument and the `--dataset` argument, with both a latest and a best weight files: 
 * latest_deeplabv3plus_mobilenet_custom_cats-and-dogs.pth
 * best_deeplabv3plus_mobilenet_custom_cats-and-dogs.pth
 
 
-#### 3.1. Continue Training
-
-Run train.py with '--continue_training' to restore the state_dict of optimizer and scheduler from YOUR_CKPT.
-
-```bash
-python main.py ... --ckpt YOUR_CKPT --continue_training
-```
 
 #### 3.2. Testing
 
@@ -99,10 +55,10 @@ You load the weight file using the `--ckpt` argument. Be sure to also pass the r
 
 Single image:
 ```bash
-python predict.py --input path/to/your/image.png  --dataset custom --model deeplabv3plus_mobilenet --ckpt checkpoints/best_deeplabv3plus_mobilenet_custom_cats-and-dogs.pth --save_val_results_to test_results
+python predict.py --input datasets/data/noseg/0593.png --model deeplabv3plus_mobilenet --ckpt checkpoints/best_deeplabv3plus_mobilenet_custom_os16_focalfix.pth --save_dir test_results --num_classes 9
 ```
 
 Image folder:
 ```bash
-python predict.py --input path/to/your/dir  --dataset custom --model deeplabv3plus_mobilenet --ckpt checkpoints/best_deeplabv3plus_mobilenet_custom_cats-and-dogs.pth --save_val_results_to test_results
+python predict.py --input datasets/data/noseg --model deeplabv3plus_mobilenet --ckpt checkpoints/best_deeplabv3plus_mobilenet_custom_os16_focalfix.pth --save_dir test_results --num_classes 9
 ```
