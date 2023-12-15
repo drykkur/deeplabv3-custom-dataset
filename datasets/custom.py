@@ -6,6 +6,7 @@ import glob
 import torch.utils.data as data
 import shutil
 import numpy as np
+from torchvision import transforms
 
 from PIL import Image
 from PIL import ImageOps
@@ -26,6 +27,9 @@ class CustomSegmentation(data.Dataset):
                  mask_dir,
                  transform=None):
         self.transform = transform
+        #self.transform = transforms.Compose([
+        #    transforms.Resize((256, 256))
+        #    ])
         # A: checking if the jpg directory exists
         #print(image_dir)
         if not os.path.isdir(image_dir):
@@ -135,10 +139,11 @@ class CustomSegmentation(data.Dataset):
                         (249,249,10), # rear door
                         (10,248,250), # frame
                         (149,7,149), # rear quarter panel
-                        (5,249,9), # trunk lid
+                        #(5,249,9), # trunk lid
+                        (11,248,7), # trunk lid segfix
                         (20,19,249), # fender
-                        (249,9,250), # bumper
-                        (255, 255, 255)]    # rest of car
+                        (249,9,250)]#, # bumper
+                        #(255, 255, 255)]    # rest of car
                         )
 
 
@@ -165,9 +170,10 @@ class CustomSegmentation(data.Dataset):
             g[label_mask == l] = label_colors[l, 1]
             b[label_mask == l] = label_colors[l, 2]
         rgb = np.zeros((label_mask.shape[0], label_mask.shape[1], 3))
-        rgb[:, :, 0] = r
-        rgb[:, :, 1] = g
-        rgb[:, :, 2] = b
+        #rgb[:, :, 0] = r
+        #rgb[:, :, 1] = g
+        #rgb[:, :, 2] = b
+        rgb = np.stack([r, g, b], axis=2)
         return rgb
     
     # A: in order for the mask to go through the loss function, the classes need to be

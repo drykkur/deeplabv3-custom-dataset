@@ -362,6 +362,7 @@ def main():
             # A: mail end  
 
             cur_epochs += 1
+            #print(train_loader)
             for (images, labels) in train_loader:
                 cur_itrs += 1
 

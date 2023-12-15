@@ -1,4 +1,5 @@
 from torch import nn
+import torch
 try: # for torchvision<0.4
     from torchvision.models.utils import load_state_dict_from_url
 except: # for torchvision>=0.4
@@ -6,7 +7,7 @@ except: # for torchvision>=0.4
 import torch.nn.functional as F
 
 __all__ = ['MobileNetV2', 'mobilenet_v2']
-
+#print('test')
 
 model_urls = {
     'mobilenet_v2': 'https://download.pytorch.org/models/mobilenet_v2-b0353104.pth',
@@ -173,7 +174,7 @@ class MobileNetV2(nn.Module):
         return x
 
 
-def mobilenet_v2(pretrained=False, progress=True, **kwargs):
+def mobilenet_v2(pretrained=True, progress=True, **kwargs):
     """
     Constructs a MobileNetV2 architecture from
     `"MobileNetV2: Inverted Residuals and Linear Bottlenecks" <https://arxiv.org/abs/1801.04381>`_.
@@ -184,7 +185,9 @@ def mobilenet_v2(pretrained=False, progress=True, **kwargs):
     """
     model = MobileNetV2(**kwargs)
     if pretrained:
-        state_dict = load_state_dict_from_url(model_urls['mobilenet_v2'],
-                                              progress=progress)
-        model.load_state_dict(state_dict)
+        #state_dict = load_state_dict_from_url(model_urls['mobilenet_v2'],
+        #                                      progress=progress)
+        #model.load_state_dict(state_dict)
+        checkpoint = torch.load('checkpoints/mobilenet_v2-b0353104.pth')
+        model.load_state_dict(checkpoint)
     return model
